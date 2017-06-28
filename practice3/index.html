@@ -1,0 +1,53 @@
+<html>
+	<head>
+		<script src="app.js"></script>
+		<script id="vs" type="x-shader/x-vertex">
+
+// ATTRIBUTE
+attribute vec3 position;
+
+// 出力
+varying vec3 v_ray;
+
+void main(void)
+{
+    gl_Position = vec4(position, 1.0);
+    v_ray = vec3( position.xy*0.4, 1.0 ); // ポジションから適当にレイを生成（ほんと適当）
+}
+
+		</script>
+		<script id="fs" type="x-shader/x-fragment">
+precision mediump float;
+
+// vsから受け取った値
+varying vec3 v_ray;
+
+// UNIFORM
+// uniform vec3 eye;
+// uniform vec3 sphere;
+// uniform vec3 dlight;
+
+void main(void)
+{
+    vec3 ray = v_ray;
+    
+    vec3 eye = vec3(0, 0, 128);
+    vec3 dlight = vec3(1, 2, 2);
+    vec3 sphere = vec3(0, 0, 128);
+
+    vec3 screen = vec3(0, 0, 128);
+
+    gl_FragColor.w = 1.0;
+
+	//gl_FragColor.xyz = vec3(0.5,0.5,0.1); 
+	gl_FragColor.xyz = vec3(ray.xy,0.0); 
+}
+		</script>
+		<style>
+			body{Margin: 0;}
+		</style>
+	</head>
+	<body>
+		<canvas id="canvas"></canvas>
+	</body>
+</html>
