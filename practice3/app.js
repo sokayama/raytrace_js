@@ -153,13 +153,6 @@
 		);
 		var config = gl.getUniformLocation(prg, "config");
 		
-		// uniform に画面サイズの初期値セット
-		gl.uniform2fv(screen_size,
-			[
-				c.width,
-				c.height
-			]
-		);
 
 		timerFunc();
 
@@ -173,6 +166,13 @@
 				]
 			);
 
+			// uniform に画面サイズの初期値セット
+			gl.uniform2fv(screen_size,
+				[
+					c.width,
+					c.height
+				]
+			);
 
 			// - レンダリングのための WebGL 初期化設定 ------------------------------------
 			// ビューポートを設定する
@@ -335,6 +335,7 @@
 	 */
 	function set_attribute(vbo, attL, attS){
 		// 引数として受け取った配列を処理する
+		//console.log(attL,attL, attS);
 		for(var i in vbo){
 			// バッファをバインドする
 			gl.bindBuffer(gl.ARRAY_BUFFER, vbo[i]);

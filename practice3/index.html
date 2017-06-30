@@ -2,45 +2,95 @@
 	<head>
 		<script src="app.js"></script>
 		<script id="vs" type="x-shader/x-vertex">
-
 // ATTRIBUTE
 attribute vec3 position;
 
-// 出力
-varying vec3 v_ray;
 
 void main(void)
 {
     gl_Position = vec4(position, 1.0);
-    v_ray = vec3( position.xy*0.4, 1.0 ); // ポジションから適当にレイを生成（ほんと適当）
 }
-
 		</script>
 		<script id="fs" type="x-shader/x-fragment">
 precision mediump float;
 
-// vsから受け取った値
-varying vec3 v_ray;
 
 // UNIFORM
 // uniform vec3 eye;
 // uniform vec3 sphere;
 // uniform vec3 dlight;
+uniform vec2 screen_size;
+
+/* びーむ */
+struct Ray{
+	vec3 origin;	// ビームの根元
+	vec3 direction;	// 方向
+};
+
+/* 球 */
+struct Sphere{
+	float radius;
+	vec3 position;
+	vec3 color;
+};
+
+/* 球のあたり判定 */
+struct Intersection{
+    bool hit; // 交差したかどうかのフラグ
+    vec3 hitPoint; // 交点の座標
+    vec3 normal; // 交点位置の法線
+    vec3 color; // 交点位置の色
+};
+
+Intersection intersectSphere(Ray R, Sphere S){
+    Intersection i;
+    vec3  a = R.origin - S.position;
+    float b = dot(a, R.direction);
+    float c = dot(a, a) - (S.radius * S.radius);
+    float d = b * b - c;
+    if(d > 0.0){
+        float t = -b - sqrt(d);
+        if(t > 0.0){
+            i.hit = true;
+            i.hitPoint = R.origin + R.direction * t;
+            i.normal = normalize(i.hitPoint - S.position);
+            float d = clamp(dot(normalize(vec3(1.0)), i.normal), 0.1, 1.0);
+            i.color = S.color * d;
+            return i;
+        }
+    }
+    i.hit = false;
+    i.hitPoint = vec3(0.0);
+    i.normal = vec3(0.0);
+    i.color = vec3(0.0);
+    return i;
+}
+
 
 void main(void)
 {
-    vec3 ray = v_ray;
-    
-    vec3 eye = vec3(0, 0, 128);
-    vec3 dlight = vec3(1, 2, 2);
-    vec3 sphere = vec3(0, 0, 128);
+	
+	/* 2次元なスクリーン座標(中心が0で -1.0 ~ 1.0 ) */
+    vec2 p = (gl_FragCoord.xy * 2.0 - screen_size) / min (screen_size.x,screen_size.y);
+	
+	/* レイ */
+	Ray ray;
+	ray.origin = vec3(0.0,0.0,5.0);
+	ray.direction = normalize(vec3(p.x, p.y, -1.0));
 
-    vec3 screen = vec3(0, 0, 128);
+	/* スフィア */
+	Sphere sphere;
+	sphere.radius = 1.0;
+	sphere.position = vec3(0.0);
+	sphere.color = vec3(1.0);
 
-    gl_FragColor.w = 1.0;
+	/* あたり判定 */
+    vec3 destColor = vec3(0.0);
+    Intersection i = intersectSphere(ray, sphere);
+	
 
-	//gl_FragColor.xyz = vec3(0.5,0.5,0.1); 
-	gl_FragColor.xyz = vec3(ray.xy,0.0); 
+	gl_FragColor = vec4(i.color, 1.0); 
+	//gl_FragColor = vec4(0.8,0.4,0.5,1.0);
 }
 		</script>
 		<style>
