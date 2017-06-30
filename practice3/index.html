@@ -21,6 +21,8 @@ precision mediump float;
 // uniform vec3 dlight;
 uniform vec2 screen_size;
 
+const vec3 lightDirection = vec3(0.577,0.0,0.5);
+
 /* びーむ */
 struct Ray{
 	vec3 origin;	// ビームの根元
@@ -54,7 +56,7 @@ Intersection intersectSphere(Ray R, Sphere S){
             i.hit = true;
             i.hitPoint = R.origin + R.direction * t;
             i.normal = normalize(i.hitPoint - S.position);
-            float d = clamp(dot(normalize(vec3(1.0)), i.normal), 0.1, 1.0);
+            float d = clamp(dot(lightDirection, i.normal), 0.1, 1.0);
             i.color = S.color * d;
             return i;
         }
