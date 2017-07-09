@@ -19,9 +19,10 @@ precision mediump float;
 // uniform vec3 eye;
 // uniform vec3 sphere;
 // uniform vec3 dlight;
+uniform vec4 config;
 uniform vec2 screen_size;
 
-const vec3 lightDirection = vec3(0.577,0.0,0.5);
+const vec3 lightDirection = vec3(0.5,0.8,0.5);
 
 /* びーむ */
 struct Ray{
@@ -36,63 +37,113 @@ struct Sphere{
 	vec3 color;
 };
 
+/* 板 */
+struct Plane{
+    vec3 position;
+    vec3 normal;
+    vec3 color;
+};
+
 /* 球のあたり判定 */
 struct Intersection{
-    bool hit; // 交差したかどうかのフラグ
     vec3 hitPoint; // 交点の座標
     vec3 normal; // 交点位置の法線
     vec3 color; // 交点位置の色
+	float distance;
 };
 
-Intersection intersectSphere(Ray R, Sphere S){
+void intersectSphere(Ray R, Sphere S, inout Intersection I){
     Intersection i;
     vec3  a = R.origin - S.position;
     float b = dot(a, R.direction);
     float c = dot(a, a) - (S.radius * S.radius);
     float d = b * b - c;
-    if(d > 0.0){
-        float t = -b - sqrt(d);
-        if(t > 0.0){
-            i.hit = true;
-            i.hitPoint = R.origin + R.direction * t;
-            i.normal = normalize(i.hitPoint - S.position);
-            float d = clamp(dot(lightDirection, i.normal), 0.1, 1.0);
-            i.color = S.color * d;
-            return i;
-        }
+	float t = -b -sqrt(d);
+    if(d > 0.0 && t > 0.0 && t < I.distance){
+		I.hitPoint = R.origin + R.direction * t;
+		I.normal = normalize(I.hitPoint - S.position);
+		d = clamp(dot(lightDirection, I.normal), 0.1, 1.0);
+		I.color = S.color * d;
+		I.distance = t;
     }
-    i.hit = false;
-    i.hitPoint = vec3(0.0);
-    i.normal = vec3(0.0);
-    i.color = vec3(0.0);
-    return i;
 }
 
+void intersectPlane(Ray R, Plane P, inout Intersection I){
+    float d = -dot(P.position, P.normal);
+    float v = dot(R.direction, P.normal);
+    float t = -(dot(R.origin, P.normal) + d) / v;
+    if(t > 0.0 && t < I.distance){
+        I.hitPoint = R.origin + R.direction * t;
+        I.normal = P.normal;
+        float d = clamp(dot(I.normal, lightDirection), 0.1, 1.0);
+        float m = mod(I.hitPoint.x, 2.0);
+        float n = mod(I.hitPoint.z, 2.0);
+        if((m > 1.0 && n > 1.0) || (m < 1.0 && n < 1.0)){ // 模様つけてる
+            d *= 0.5;
+        }
+        float f = 1.0 - min(abs(I.hitPoint.z), 25.0) * 0.04;
+        I.color = P.color * d * f;
+        I.distance = t;
+    }
+}
 
 void main(void)
 {
-	
+	float timer = config.x;
+	float mouse_x = config.y;
+	float mouse_y = config.z;
 	/* 2次元なスクリーン座標(中心が0で -1.0 ~ 1.0 ) */
     vec2 p = (gl_FragCoord.xy * 2.0 - screen_size) / min (screen_size.x,screen_size.y);
 	
+
+	vec3 cameraHorizontal = vec3(cos(mouse_x/100.0),0.0,sin(mouse_x/100.0));
+	//vec3 cameraVertical = vec3(0.0,cos(mouse_y),sin(mouse_y));
+
 	/* レイ */
 	Ray ray;
-	ray.origin = vec3(0.0,0.0,5.0);
-	ray.direction = normalize(vec3(p.x, p.y, -1.0));
 
-	/* スフィア */
-	Sphere sphere;
-	sphere.radius = 1.0;
-	sphere.position = vec3(0.0);
-	sphere.color = vec3(1.0);
+	vec3 cPos = cameraHorizontal * 5.0; // カメラの位置
+    vec3 cDir = normalize(cameraHorizontal * -1.0); // カメラの向き(視線)
+    vec3 cUp  = vec3(0.0,  1.0,  0.0); // カメラの上方向
+    vec3 cSide = cross(cDir, cUp);     // 外積を使って横方向を算出
+    float targetDepth = 1.0;           // フォーカスする深度
+
+	ray.origin = cPos; // カメラの位置
+	ray.direction = normalize(cSide * p.x + cUp * p.y + cDir * targetDepth);
+
+    // intersection init
+    Intersection i;
+    i.hitPoint = vec3(0.0);
+    i.normal = vec3(0.0);
+    i.color = vec3(0.0);
+    i.distance = 1.0e+30;
+
+	/* モノ */
+	Sphere sphere[3];
+    sphere[0].radius = 1.0;
+    sphere[0].position = vec3(sin(timer/100.0), 0.0, cos(timer/100.0));
+    sphere[0].color = vec3(1.0, 1.0, 0.5);
+    sphere[1].radius = 1.0;
+    sphere[1].position = vec3(2.0, 0.0, 0.5);
+    sphere[1].color = vec3(1.0, 0.6, 0.8);
+    sphere[2].radius = 1.5;
+    sphere[2].position = vec3(-2.0, 0.0, 0.2);
+    sphere[2].color = vec3(1.0, 0.8, 0.5);
+
+    Plane plane;
+    plane.position = vec3(0.0, -1.0, 0.0);
+    plane.normal = vec3(0.0, 1.0, 0.0);
+    plane.color = vec3(1.0);
 
 	/* あたり判定 */
     vec3 destColor = vec3(0.0);
-    Intersection i = intersectSphere(ray, sphere);
-	
+	intersectSphere(ray, sphere[0], i);
+	intersectSphere(ray, sphere[1], i);
+	intersectSphere(ray, sphere[2], i);
+	intersectPlane(ray, plane, i);
 
 	gl_FragColor = vec4(i.color, 1.0); 
-	//gl_FragColor = vec4(0.8,0.4,0.5,1.0);
+	//gl_FragColor = vec4(mouse_x/100.0,mouse_y/100.0,0.5,1.0);
 }
 		</script>
 		<style>

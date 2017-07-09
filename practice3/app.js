@@ -31,48 +31,56 @@
 		c.width = window.innerWidth;
 		c.height = window.innerHeight;
 
-		//タッチするボタン
-		function zoomButton(){
-			data.buttonStatus = BUTTON_STATUS.LENS;
-		}
-		function homeButton(){
-			data.buttonStatus = BUTTON_STATUS.HOME;
-		}
-		function freeButton(){
-			data.buttonStatus = BUTTON_STATUS.FREE;
-		}
-		// function onClick(e) {
-		// 	var x = e.clientX;
-		// 	var y = e.clientY;
-		// 	if(x < 490){
-		// 		 console.log("clicked zoom",x);
-		// 		zoomButton();
-		// 	}
-		// 	else
-		// 	{
-		// 		 console.log("clicked reset",x);
-		// 		homeButton();
-		// 	}
-		// }
-		// c.addEventListener("click",onClick,false);
+		var mouse_start_x = 0;
+		var mouse_start_y = 0;
+		var mouse_move_x = 0;
+		var mouse_move_y = 0;
+		var mouse_down = false;
+		if(window.ontouchstart === null){
+			console.log("タッチ可能");
+			document.addEventListener("touchstart",function(eve){
+				mouse_start_x = eve.pageX;
+				mouse_start_y = eve.pageY;
+				mouse_down = true;
+			},false);
 
-		c.addEventListener("touchstart",function(eve){
-			var x = eve.pageX;
-			if(x < 490){
-				console.log("touchstart zoom",x);
-				zoomButton();
-			}
-			else
-			{
-				console.log("touchstart home",x);
-				homeButton();
-			}
-			
-		},false);
-		c.addEventListener("touchend",function(eve){
-			console.log("touch end");
-			freeButton();
-		},false);
+			document.addEventListener("touchmove",function(eve){
+				if(mouse_down){
+					mouse_move_move_x = eve.pageX - mouse_start_x;
+					mouse_move_y = eve.pageY - mouse_start_y;
+					console.log("move_x",mouse_move_x);
+					console.log("move_y",mouse_move_y);
+				}
+			},false);
+
+			document.addEventListener("touchup",function(eve){
+				mouse_down = false;
+			},false);
+
+
+		}else if (window.ontouchstart === undefined){
+			console.log("タッチむり");
+			document.addEventListener("mousedown",function(eve){
+				mouse_start_x = eve.pageX;
+				mouse_start_y = eve.pageY;
+				mouse_down = true;
+			},false);
+
+			document.addEventListener("mousemove",function(eve){
+				if(mouse_down){
+					mouse_move_x = eve.pageX - mouse_start_x;
+					mouse_move_y = eve.pageY - mouse_start_y;
+					console.log("move_x",mouse_move_x);
+					console.log("move_y",mouse_move_y);
+				}
+			},false);
+
+			document.addEventListener("mouseup",function(eve){
+				mouse_down = false;
+			},false);
+
+
+		}
 
 		// webglコンテキストを取得
 		gl = c.getContext('webgl') || c.getContext('experimental-webgl');
@@ -152,19 +160,22 @@
 			]
 		);
 		var config = gl.getUniformLocation(prg, "config");
+		var timer = gl.getUniformLocation(prg, "timer");
 		
 
 		timerFunc();
-
+		var t = 0;//timer
 		function timerFunc(){
 			gl.uniform4fv(config,
 				[
-					0,
-					0,
-					0,
+					t,
+					mouse_move_x,
+					mouse_move_y,
 					0
 				]
 			);
+
+			t++;
 
 			// uniform に画面サイズの初期値セット
 			gl.uniform2fv(screen_size,
