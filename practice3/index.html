@@ -91,19 +91,19 @@ void main(void)
 {
 	float timer = config.x;
 	float mouse_x = config.y;
-	float mouse_y = config.z;
+	float mouse_y = clamp(config.z,0.0,100.0);
 	/* 2次元なスクリーン座標(中心が0で -1.0 ~ 1.0 ) */
     vec2 p = (gl_FragCoord.xy * 2.0 - screen_size) / min (screen_size.x,screen_size.y);
 	
-
 	vec3 cameraHorizontal = vec3(cos(mouse_x/100.0),0.0,sin(mouse_x/100.0));
-	//vec3 cameraVertical = vec3(0.0,cos(mouse_y),sin(mouse_y));
-
+	vec3 cameraVertical = vec3(0.0,mouse_y/100.0,0.0);
+    
+    vec3 cameraPosition = (cameraHorizontal * 5.0) + cameraVertical;
 	/* レイ */
 	Ray ray;
 
-	vec3 cPos = cameraHorizontal * 5.0; // カメラの位置
-    vec3 cDir = normalize(cameraHorizontal * -1.0); // カメラの向き(視線)
+	vec3 cPos = cameraPosition; // カメラの位置
+    vec3 cDir = normalize(cameraPosition * -1.0); // カメラの向き(視線)
     vec3 cUp  = vec3(0.0,  1.0,  0.0); // カメラの上方向
     vec3 cSide = cross(cDir, cUp);     // 外積を使って横方向を算出
     float targetDepth = 1.0;           // フォーカスする深度
@@ -121,13 +121,13 @@ void main(void)
 	/* モノ */
 	Sphere sphere[3];
     sphere[0].radius = 1.0;
-    sphere[0].position = vec3(sin(timer/100.0), 0.0, cos(timer/100.0));
+    sphere[0].position = vec3(0.0, 0.0, 0.0);
     sphere[0].color = vec3(1.0, 1.0, 0.5);
-    sphere[1].radius = 1.0;
-    sphere[1].position = vec3(2.0, 0.0, 0.5);
+    sphere[1].radius = 0.2;
+    sphere[1].position = vec3(sin(timer/100.0) * 1.5, 0.0, cos(timer/100.0) * 1.5);
     sphere[1].color = vec3(1.0, 0.6, 0.8);
-    sphere[2].radius = 1.5;
-    sphere[2].position = vec3(-2.0, 0.0, 0.2);
+    sphere[2].radius = 0.3;
+    sphere[2].position = vec3(sin(timer/120.0) * 3.0, 0.0, cos(timer/120.0) * 3.0);
     sphere[2].color = vec3(1.0, 0.8, 0.5);
 
     Plane plane;

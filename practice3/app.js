@@ -46,10 +46,13 @@
 
 			document.addEventListener("touchmove",function(eve){
 				if(mouse_down){
-					mouse_move_move_x = eve.pageX - mouse_start_x;
-					mouse_move_y = eve.pageY - mouse_start_y;
+					mouse_move_x += eve.pageX - mouse_start_x;
+					mouse_move_y += eve.pageY - mouse_start_y;
 					console.log("move_x",mouse_move_x);
 					console.log("move_y",mouse_move_y);
+					mouse_start_x = eve.pageX;
+					mouse_start_y = eve.pageY;
+
 				}
 			},false);
 
@@ -68,10 +71,12 @@
 
 			document.addEventListener("mousemove",function(eve){
 				if(mouse_down){
-					mouse_move_x = eve.pageX - mouse_start_x;
-					mouse_move_y = eve.pageY - mouse_start_y;
+					mouse_move_x += eve.pageX - mouse_start_x;
+					mouse_move_y += eve.pageY - mouse_start_y;
 					console.log("move_x",mouse_move_x);
 					console.log("move_y",mouse_move_y);
+					mouse_start_x = eve.pageX;
+					mouse_start_y = eve.pageY;
 				}
 			},false);
 
