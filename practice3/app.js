@@ -1,9 +1,5 @@
 (function(){
 	var cameraState = {
-		rotate : {
-			x:0.0,
-			y:0.0
-		},
 		target : {
 			x:0.0,
 			y:0.0,
@@ -77,7 +73,28 @@
 					console.log("move_y",mouse_move_y);
 					mouse_start_x = eve.pageX;
 					mouse_start_y = eve.pageY;
-				}
+
+					var calc = {
+						cosx : 0.0,
+						sinx : 0.0,
+						cosy : 0.0,
+						siny : 0.0
+					};
+					calc.cosx = Math.cos(mouse_move_x / 100.0);
+					calc.sinx = Math.sin(mouse_move_x / 100.0);
+					calc.cosy = Math.cos(mouse_move_y / 100.0);
+					calc.siny = Math.sin(mouse_move_y / 100.0);
+
+					calc.zzz = calc.cosx * Math.abs(calc.siny);
+					calc.xxx = calc.sinx * Math.abs(calc.siny);
+					
+					cameraState.target.x = calc.xxx;
+					cameraState.target.y = calc.cosy;
+					cameraState.target.z = calc.zzz;
+					console.log("x",cameraState.target.x);
+					console.log("y",cameraState.target.y);
+					console.log("z",cameraState.target.z);
+			}
 			},false);
 
 			document.addEventListener("mouseup",function(eve){
