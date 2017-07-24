@@ -23,8 +23,6 @@ uniform vec4 config;
 uniform vec2 screen_size;
 uniform vec3 at;
 
-const vec3 lightDirection = vec3(0.5,0.8,0.5);
-
 /* びーむ */
 struct Ray{
 	vec3 origin;	// ビームの根元
@@ -47,25 +45,71 @@ struct Plane{
 
 /* 球のあたり判定 */
 struct Intersection{
+    int hit;
     vec3 hitPoint; // 交点の座標
     vec3 normal; // 交点位置の法線
     vec3 color; // 交点位置の色
-	float distance;
+    float distance;
+    vec3 rayDir;
 };
 
+const vec3 lightDirection = vec3(0.5,0.8,0.5);
+const float EPS = 0.0001;
+const int   MAX_REF = 4;
+
+Sphere sphere[9];
+Plane plane;
+
+void intersectionInit(inout Intersection I){
+    I.hit      = 0;
+    I.hitPoint = vec3(0.0);
+    I.normal   = vec3(0.0);
+    I.color    = vec3(0.0);
+    I.distance = 1.0e+30;
+    I.rayDir   = vec3(0.0);
+}
+
+void objectInit(float timer){
+	/* モノ */
+    sphere[0].radius = 1.0;
+    sphere[0].position = vec3(0.0, 0.0, 0.0);
+    sphere[0].color = vec3(0.9, 0.3, 0.3);
+
+    sphere[1].radius = 0.1;
+    sphere[1].position = vec3(sin(timer/150.0) * 1.5, 0.0, cos(timer/150.0) * 1.5);
+    sphere[1].color = vec3(0.2, 0.3, 0.9);
+
+    sphere[2].radius = 0.3;
+    sphere[2].position = vec3(sin(timer/190.0) * 3.0, 0.0, cos(timer/190.0) * 3.0);
+    sphere[2].color = vec3(0.9, 0.9, 0.3);
+
+    sphere[3].radius = 0.3;
+    sphere[3].position = vec3(sin(timer/210.0) * 4.5, 0.0, cos(timer/210.0) * 4.5);
+    sphere[3].color = vec3(0.3, 0.8, 0.9);
+
+    sphere[4].radius = 0.15;
+    sphere[4].position = vec3(sin(timer/300.0) * 6.0, 0.0, cos(timer/300.0) * 6.0);
+    sphere[4].color = vec3(0.9, 0.4, 0.3);
+
+    plane.position = vec3(0.0, -1.0, 0.0);
+    plane.normal = vec3(0.0, 1.0, 0.0);
+    plane.color = vec3(1.0);
+}
+
 void intersectSphere(Ray R, Sphere S, inout Intersection I){
-    Intersection i;
     vec3  a = R.origin - S.position;
     float b = dot(a, R.direction);
     float c = dot(a, a) - (S.radius * S.radius);
     float d = b * b - c;
 	float t = -b -sqrt(d);
-    if(d > 0.0 && t > 0.0 && t < I.distance){
+    if(d > EPS && t > 0.0 && t < I.distance){
 		I.hitPoint = R.origin + R.direction * t;
 		I.normal = normalize(I.hitPoint - S.position);
 		d = clamp(dot(lightDirection, I.normal), 0.1, 1.0);
 		I.color = S.color * d;
-		I.distance = t;
+        I.distance = t;
+        I.hit++;
+        I.rayDir = R.direction;
     }
 }
 
@@ -85,7 +129,18 @@ void intersectPlane(Ray R, Plane P, inout Intersection I){
         float f = 1.0 - min(abs(I.hitPoint.z), 25.0) * 0.04;
         I.color = P.color * d * f;
         I.distance = t;
+        I.hit++;
+        I.rayDir = R.direction;
     }
+}
+
+void intersectExec(Ray R, inout Intersection I){
+  	intersectSphere(R, sphere[0], I);
+	intersectSphere(R, sphere[1], I);
+	intersectSphere(R, sphere[2], I);
+	intersectSphere(R, sphere[3], I);
+	intersectSphere(R, sphere[4], I);
+	intersectPlane(R, plane, I);
 }
 
 void main(void)
@@ -114,38 +169,35 @@ void main(void)
 	ray.origin = cPos; // カメラの位置
 	ray.direction = normalize(cSide * p.x + cUp * p.y + cDir * targetDepth);
 
+    /* モノ */
+    objectInit(timer);
+
     // intersection init
-    Intersection i;
-    i.hitPoint = vec3(0.0);
-    i.normal = vec3(0.0);
-    i.color = vec3(0.0);
-    i.distance = 1.0e+30;
-
-	/* モノ */
-	Sphere sphere[3];
-    sphere[0].radius = 1.0;
-    sphere[0].position = vec3(0.0, 0.0, 0.0);
-    sphere[0].color = vec3(1.0, 1.0, 0.5);
-    sphere[1].radius = 0.2;
-    sphere[1].position = vec3(sin(timer/100.0) * 1.5, 0.0, cos(timer/100.0) * 1.5);
-    sphere[1].color = vec3(1.0, 0.6, 0.8);
-    sphere[2].radius = 0.3;
-    sphere[2].position = vec3(sin(timer/120.0) * 3.0, 0.0, cos(timer/120.0) * 3.0);
-    sphere[2].color = vec3(1.0, 0.8, 0.5);
-
-    Plane plane;
-    plane.position = vec3(0.0, -1.0, 0.0);
-    plane.normal = vec3(0.0, 1.0, 0.0);
-    plane.color = vec3(1.0);
+    Intersection its;
+    intersectionInit(its);
 
 	/* あたり判定 */
-    vec3 destColor = vec3(0.0);
-	intersectSphere(ray, sphere[0], i);
-	intersectSphere(ray, sphere[1], i);
-	intersectSphere(ray, sphere[2], i);
-	intersectPlane(ray, plane, i);
+    vec3 destColor = vec3(ray.direction.y);
+    vec3 tempColor = vec3(1.0);
+    Ray q;
 
-    gl_FragColor = vec4(i.color, 1.0); 
+    intersectExec(ray, its);
+
+    if(its.hit > 0){
+        destColor = its.color;
+        tempColor *= its.color;
+        for(int j = 1; j < MAX_REF; j++){
+            q.origin = its.hitPoint + its.normal * EPS;
+            q.direction = reflect(its.rayDir, its.normal);
+            intersectExec(q, its);
+            if(its.hit > j){
+                destColor += tempColor * its.color;
+                tempColor *= its.color;
+            }
+        }
+    }
+    gl_FragColor = vec4(destColor, 1.0);
+
     //gl_FragColor = vec4(at, 1.0); 
     
 	//gl_FragColor = vec4(mouse_x/100.0,mouse_y/100.0,0.5,1.0);
