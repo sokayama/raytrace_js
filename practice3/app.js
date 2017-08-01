@@ -30,8 +30,11 @@
 		var mouse_start_x = 0;
 		var mouse_start_y = 0;
 		var mouse_move_x = 0;
-		var mouse_move_y = 0;
+		var mouse_move_y = -150;
 		var mouse_down = false;
+		cametaStateTarget();
+
+
 		if(window.ontouchstart === null){
 			console.log("タッチ可能");
 			document.addEventListener("touchstart",function(eve){
@@ -67,34 +70,21 @@
 
 			document.addEventListener("mousemove",function(eve){
 				if(mouse_down){
-					mouse_move_x += eve.pageX - mouse_start_x;
-					mouse_move_y += eve.pageY - mouse_start_y;
+					var result_mouse_x = eve.pageX - mouse_start_x;
+					var result_mouse_y = eve.pageY - mouse_start_y;
+					mouse_move_x += result_mouse_x;
 					console.log("move_x",mouse_move_x);
-					console.log("move_y",mouse_move_y);
 					mouse_start_x = eve.pageX;
-					mouse_start_y = eve.pageY;
-
-					var calc = {
-						cosx : 0.0,
-						sinx : 0.0,
-						cosy : 0.0,
-						siny : 0.0
-					};
-					calc.cosx = Math.cos(mouse_move_x / 100.0);
-					calc.sinx = Math.sin(mouse_move_x / 100.0);
-					calc.cosy = Math.cos(mouse_move_y / 100.0);
-					calc.siny = Math.sin(mouse_move_y / 100.0);
-
-					calc.zzz = calc.cosx * Math.abs(calc.siny);
-					calc.xxx = calc.sinx * Math.abs(calc.siny);
-					
-					cameraState.target.x = calc.xxx;
-					cameraState.target.y = calc.cosy;
-					cameraState.target.z = calc.zzz;
-					console.log("x",cameraState.target.x);
-					console.log("y",cameraState.target.y);
-					console.log("z",cameraState.target.z);
-			}
+					if(0 > result_mouse_y + mouse_move_y && -170 < result_mouse_y + mouse_move_y){
+						mouse_move_y += result_mouse_y;
+						console.log("move_y",mouse_move_y);
+						mouse_start_y = eve.pageY;
+					}else{
+						mouse_start_x = eve.pageX;
+						mouse_start_y = eve.pageY;
+					}
+					cametaStateTarget();
+				}
 			},false);
 
 			document.addEventListener("mouseup",function(eve){
@@ -102,6 +92,29 @@
 			},false);
 
 
+		}
+		function cametaStateTarget(){
+
+			var calc = {
+				cosx : 0.0,
+				sinx : 0.0,
+				cosy : 0.0,
+				siny : 0.0
+			};
+			calc.cosx = Math.cos(mouse_move_x / 100.0);
+			calc.sinx = Math.sin(mouse_move_x / 100.0);
+			calc.cosy = Math.cos(mouse_move_y / 100.0);
+			calc.siny = Math.sin(mouse_move_y / 100.0);
+
+			calc.zzz = calc.cosx * Math.abs(calc.siny);
+			calc.xxx = calc.sinx * Math.abs(calc.siny);
+			
+			cameraState.target.x = calc.xxx;
+			cameraState.target.y = calc.cosy;
+			cameraState.target.z = calc.zzz;
+			console.log("x",cameraState.target.x);
+			console.log("y",cameraState.target.y);
+			console.log("z",cameraState.target.z);
 		}
 
 		// webglコンテキストを取得
@@ -190,10 +203,10 @@
 		function timerFunc(){
 			gl.uniform4fv(config,
 				[
-					t,
 					mouse_move_x,
 					mouse_move_y,
-					0
+					t,
+					0.0
 				]
 			);
 
