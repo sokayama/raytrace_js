@@ -7,15 +7,15 @@
 		}
 	}
 
-    var windowWidth;
-    var windowHeight;
+    const CANVAS_WIDTH = 800;
+    const CANVAS_HEIGHT = 800;
 
     // --*--*--*--*--*--*--*--*--*--
     // windowのサイズ変更したとき
     // --*--*--*--*--*--*--*--*--*--
     window.addEventListener("resize",function(){
-		c.width = window.innerWidth;
-		c.height = window.innerHeight;
+		c.width = CANVAS_WIDTH;
+		c.height = CANVAS_HEIGHT;
     });
 
     window.addEventListener("load",function(){
@@ -24,8 +24,8 @@
 		c = document.getElementById('canvas');
 
 		// canvasのサイズをスクリーン全体に広げる
-		c.width = window.innerWidth;
-		c.height = window.innerHeight;
+		c.width = CANVAS_WIDTH;
+		c.height = CANVAS_HEIGHT;
 
 		var mouse_start_x = 0;
 		var mouse_start_y = 0;
