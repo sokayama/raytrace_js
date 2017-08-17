@@ -5,7 +5,6 @@
 // ATTRIBUTE
 attribute vec3 position;
 
-
 void main(void)
 {
     gl_Position = vec4(position, 1.0);
@@ -14,11 +13,6 @@ void main(void)
 		<script id="fs" type="x-shader/x-fragment">
 precision mediump float;
 
-
-// UNIFORM
-// uniform vec3 eye;
-// uniform vec3 sphere;
-// uniform vec3 dlight;
 uniform vec4 config;
 uniform vec2 screen_size;
 uniform vec3 at;
@@ -104,9 +98,15 @@ void intersectSphere(Ray R, Sphere S, inout Intersection I){
 	float t = -b -sqrt(d);
     if(d > EPS && t > 0.0 && t < I.distance){
 		I.hitPoint = R.origin + R.direction * t;
-		I.normal = normalize(I.hitPoint - S.position);
-		d = clamp(dot(lightDirection, I.normal), 0.1, 1.0);
-		I.color = S.color * d;
+        I.normal = normalize(I.hitPoint - S.position);
+        
+        d = clamp(dot(lightDirection, I.normal), 0.1, 1.0);
+        d = dot(lightDirection, I.normal);
+        //vec3 H = normalize(I.rayDir + lightDirection);
+        //float specularLight = pow(max(dot(H,I.normal),0.0),1.0);
+        //I.color = S.color * specularLight;
+
+        I.color = S.color * d;
         I.distance = t;
         I.hit++;
         I.rayDir = R.direction;
@@ -121,18 +121,18 @@ void intersectPlane(Ray R, Plane P, inout Intersection I){
         I.hitPoint = R.origin + R.direction * t;
         I.normal = P.normal;
         float d = clamp(dot(I.normal, lightDirection), 0.1, 1.0);
-        float m = sin(I.hitPoint.x);
-        float n = sin(I.hitPoint.z);
-        if((n > 0.4 && n < 0.6 )){ // 模様つけてる
-            //P.color.g *= 0.5;
-            //P.color.b *= 0.5;
-        }
-        P.color.r *= 0.1;
+        float m = mod(I.hitPoint.x, 2.0);
+        float n = mod(I.hitPoint.z, 2.0);
 
         float col = 1.0;
-        col *= cos(I.hitPoint.x-100.0 * config.z/1000.0);
+        if((m > 1.0 && n > 1.0) || (m < 1.0 && n < 1.0)){
+            P.color *= 0.2;
+        }
+
+        //col *= cos(I.hitPoint.x-100.0 * config.z/1000.0);
         //col *= sin(I.hitPoint.z-100.0 * config.z/1000.0);
-        P.color += vec3(col*0.2,col*0.9,col*0.9);
+        //P.color *= vec3(col*0.8,col*1.0,col*1.0);
+        //P.color *= vec3(col);
 
         float f1 = 1.0 - min(abs(I.hitPoint.z), 25.0) * 0.04;
         float f2 = 1.0 - min(abs(I.hitPoint.x), 25.0) * 0.04;
