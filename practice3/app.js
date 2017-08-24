@@ -44,15 +44,24 @@
 			},false);
 
 			document.addEventListener("touchmove",function(eve){
+				event.preventDefault();
 				if(mouse_down){
-					mouse_move_x += eve.pageX - mouse_start_x;
-					mouse_move_y += eve.pageY - mouse_start_y;
+					var result_mouse_x = eve.pageX - mouse_start_x;
+					var result_mouse_y = eve.pageY - mouse_start_y;
+					mouse_move_x += result_mouse_x;
 					console.log("move_x",mouse_move_x);
-					console.log("move_y",mouse_move_y);
 					mouse_start_x = eve.pageX;
-					mouse_start_y = eve.pageY;
-
+					if(0 > result_mouse_y + mouse_move_y && -170 < result_mouse_y + mouse_move_y){
+						mouse_move_y += result_mouse_y;
+						console.log("move_y",mouse_move_y);
+						mouse_start_y = eve.pageY;
+					}else{
+						mouse_start_x = eve.pageX;
+						mouse_start_y = eve.pageY;
+					}
+					cametaStateTarget();
 				}
+
 			},false);
 
 			document.addEventListener("touchup",function(eve){
